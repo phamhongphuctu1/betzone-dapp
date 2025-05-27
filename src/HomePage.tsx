@@ -1,28 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "./useTranslation";
 import { useLanguage } from "./LanguageContext";
-import type { Language } from "./LanguageContext";
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const { lang } = useLanguage(); // không dùng setLang ở đây
+  const { lang } = useLanguage(); // không cần setLang ở đây
   const [piUser, setPiUser] = useState<any>(null);
   const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
-    const loginWithPi = async () => {
-      try {
-        const Pi = (window as any).Pi;
-        const scopes = ["username", "payments"];
-        const authResult = await Pi.authenticate(scopes);
-        setPiUser(authResult.user);
-        setBalance(3.1415); // ✅ giá trị demo Pi
-      } catch (error) {
-        console.error("❌ Pi login error:", error);
-      }
-    };
+    const Pi = (window as any).Pi;
 
-    loginWithPi();
+    if (Pi && Pi.authenticate) {
+      Pi.authenticate(["username"])
+        .then((authResult: any) => {
+          setPiUser(authResult.user);
+          setBalance(3000); // Hoặc gọi API blockchain để lấy số dư thật
+          localStorage.setItem("pi_user", JSON.stringify(authResult.user));
+          console.log("✅ Đăng nhập thành công:", authResult.user);
+        })
+        .catch((err: any) => {
+          console.error("❌ Lỗi khi đăng nhập Pi:", err);
+        });
+    } else {
+      console.warn("⚠️ Pi SDK không khả dụng trong trình duyệt này.");
+    }
   }, []);
 
   return (
@@ -62,4 +64,3 @@ export default function HomePage() {
     </div>
   );
 }
-
